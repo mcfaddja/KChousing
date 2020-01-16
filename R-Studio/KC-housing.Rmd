@@ -1,0 +1,150 @@
+---
+title: "King County Housing Prices"
+output:
+  pdf_document: default
+  html_notebook: default
+---
+**Jonathan McFadden**
+
+TCSS-551 : Big Data Analytics
+
+*Autumn 2017* 
+
+
+
+# Introduction
+
+## Overview
+
+For our final project, we have chosen to analyze data covering housing sales in King County.  To do this, we are using the data from the **Kaggle** *King County House Sales Prediction* page at
+
+<center>https://www.kaggle.com/harlfoxem/housesalesprediction</center>
+
+From this page, we sign-up for an account (*free, but required for downloading*) and then download the *zip* file containing the *CSV* file with the data.
+
+Our goal is to use this data to create models for home sales in King County based on the feature information provided in the obtained data file.  Our eventual goal is two-fold.  First, we wish to create a model or models which will enable us to quantitatively predict house sale prices, using this data set as the basis for our model or models.  Our other goal is to determine, based on the obtained data, which features are most important to the sale price of a house.
+
+## Data File
+
+Our first task is to import, examine, and then give an overall description of the data.  We are especially interested in the size and descriptive contents of the data file.  Specifially, we want to know the number of sales contined within the data file and, especially, what parameters the data file uses to describe each house sale.  Furthermore, we want to check the import to ensure that the data was initially complete, that it was then imported correctly, and that **_R_** is interpreting the imported data properly.
+
+### Import and First-Look
+
+We begin by importing the data file into the '**_houseDFo_**( )' data frame.  This data frame will serve as an intial data-frame, not the working one.  This is because we may need an initial frame to reload as a we clean the data, allowing us to avoid having to reimport the CSV file over ang over again.  Thus, we now import the CSV file into this initial data frame.
+
+```{r}
+houseDFo <- read.csv("../houseData.csv")
+```
+
+We are now interested in the number of data-points contined within the data file.  Thus, we want to see how many row **_R_** has imported.
+
+```{r}
+nrow(houseDFo)
+```
+
+We also want to see how many descriptors the imported data uses to describe each house sale.  Thus we want to see how many columns **_R_** has imported.
+
+```{r}
+ncol(houseDFo)
+```
+
+In addition, we want to see what the labels for those columns are and what type of values the elements of each column have (*interger, numeric, string, etc.*)
+
+```{r}
+sapply(houseDFo, class)
+```
+
+From above, it is clear that the **date** column did not import as a *date*, instead importing as a *factor*.  Therefore, we will now examine the first few rows of the imported data to see what may have caused the issues with imporation.
+
+```{r}
+head(houseDFo)
+```
+
+
+## Clean the Data
+
+### Missing Data
+
+First, we will check to see if there are any missing data points.
+
+```{r}
+houseDFo[!complete.cases(houseDFo),]
+```
+
+Since there are no missing data points, we can move on to the dates.
+
+### Dates
+
+From the first few rows of the data table seen above, it is clear that we must first strip the *"T000000"* string at the end of every date.  To do this, we require the **stringr** library.  Thus, we import **stringr**
+
+```{r}
+library(stringr)
+```
+
+so we can now strip the offending substrings.  Before stripping these substrings, we create a copy of our initial data frame, **_houseDFo_**( ), so that our initial import data frame will remain untouched, and therefore available for reloading other data frames.  Thus, we create the copy and strip the substrings, storing the result in the copied data frame **_houseDFo1_**( ).
+
+```{r}
+houseDFo1 <- houseDFo
+houseDFo1$date = str_replace(houseDFo$date, "T000000", "")
+```
+
+We now examine the result of this
+
+```{r}
+head(houseDFo1)
+```
+
+The dates are now just strings of numbers with the format '*yyyymmdd*'; therefore, we can use the date conversion method from **_R_** to convert these dates.  
+
+```{r}
+houseDFo1 <- transform(houseDFo1, date = as.Date(date, "%Y%m%d"))
+```
+
+To ensure that the conversion to dates happend properly, we will no check the column data types followed by looking at the first few rows of the data.
+
+```{r}
+sapply(houseDFo1, class)
+head(houseDFo1)
+```
+
+Since the results for the date conversions are as desired, we can now store the data in a final data frame followed by moving on to begining our analysis.
+
+```{r}
+houseDF <- houseDFo1
+```
+
+We will also create a version of the data with the **ID** column stripped out.
+
+```{r}
+houseDFa <- houseDF[-c(1)]
+```
+
+
+
+
+# Analysis
+
+## Initial Analysis
+
+To begin our analysis, we will look at the basic statistics of every column (*except the date*).
+
+```{r}
+sapply(houseDFa[-c(1)], function(x) list(mean=mean(x), 
+                                         stdev=sd(x, na.rm=TRUE)))
+```
+
+```{r}
+library(nnet)
+modelA <- lm(price ~., data=houseDFa)
+summary(modelA)
+```
+
+
+
+
+
+
+
+
+
+
